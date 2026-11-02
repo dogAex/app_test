@@ -1,8 +1,7 @@
-﻿package com.test.overlay;
+package com.test.overlay;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.PixelFormat;
 import android.net.Uri;
 import android.opengl.GLES30;
@@ -19,12 +18,10 @@ import java.nio.FloatBuffer;
 
 public class MainActivity extends Activity {
     private GLSurfaceView glView;
-    private static final int SHIZUKU_REQUEST_CODE = 1002;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
             Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
             startActivityForResult(intent, 1000);
@@ -37,7 +34,6 @@ public class MainActivity extends Activity {
         WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
         
         // 核心绝杀：把系统级的画布尺寸设为 1x1 像素，绝对不挡触摸！
-        // 但是在下面的 FieldRenderer 里，我们会强行拉升 Viewport 到全屏。
         int layoutFlag = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE 
                        | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE 
                        | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
@@ -135,8 +131,7 @@ class FieldRenderer implements GLSurfaceView.Renderer {
 
     @Override 
     public void onSurfaceChanged(GL10 gl, int width, int height) { 
-        // 核心诡计：虽然 Window 只有 1x1，这里强行把 GLES 视口拉到屏幕实际大小！
-        // 借助 GLES 的底层通道，直接覆盖整个物理屏幕的合成层
+        // 强行拉升 Viewport 到全屏，绕过 1x1 尺寸限制
         GLES30.glViewport(0, 0, 1080, 2400); 
         GLES30.glUseProgram(program);
         int resLoc = GLES30.glGetUniformLocation(program, "u_resolution");
